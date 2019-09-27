@@ -52,6 +52,7 @@ const piece = (function () {
       return newTop;
     }
     const getCurrLeftPos = () => this.el.getBoundingClientRect().left;
+
     const createAnimationDx = setInterval(function () {
       const direction = dx > 0 ? 'right' : 'left';
       const final = newLeftPos();
@@ -63,10 +64,26 @@ const piece = (function () {
       }
       const step = direction === 'right' ? 3 : -3;
       this.el.style.left = `${current + step}px`;
+    }.bind(this), 20);
+
+
+
+    const getCurrTopPos = () => this.el.getBoundingClientRect().top;
+    const createAnimationDy = setInterval(function () {
+      const direction = dy > 0 ? 'top' : 'down';
+      const final = newTopPos();
+      const current = getCurrTopPos();
+
+      if (direction === 'top' ? current >= final : final >= current) {
+        clearInterval(createAnimationDy);
+        return;
+      }
+      const step = direction === 'top' ? 3 : -3;
+      this.el.style.top = `${current + step}px`;
     }.bind(this), 20)
 
     // this.el.style.left = `${newLeftPos()}px`;
-    this.el.style.top = `${newTopPos()}px`;
+    // this.el.style.top = `${newTopPos()}px`;
   };
 
   const setColor = function (color) {
