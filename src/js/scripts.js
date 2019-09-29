@@ -19,28 +19,44 @@ const piece = (function () {
     this.el.style.left = Math.floor(Math.random() * 100) + "vw";
     this.el.style.top = Math.floor(Math.random() * 100) + "vh";
   }
-  const moveDelta = function (dx, dy) {
 
-    const pos = this.el.getBoundingClientRect();
+  const createAnimation = function (delta, el, axis) {
+    const final = getFinalPosition(delta, el);
+    const interval = setInterval(function () {
+      const current = el.getBoundingClientRect().left;
+      const direction = delta > 0 ? 'right' : 'left';
+      if (direction === 'right' ? current >= final : final >= current) {
+        clearInterval(interval);
+        return;
+      }
+      const step = direction === 'right' ? 3 : -3;
+      el.style.left = `${current + step}px`;
+    }, 20);
+  };
+
+
+
+  const getFinalPosition = function (delta, el) {
+    const pos = el.getBoundingClientRect();
     const screenWidth =
       window.innerWidth || document.documentElement.clientWidth;
-
-    const screenHeight =
-      window.innerHeight || document.documentElement.clientHeight;
-
-    const newLeft = pos.left + dx;
+    const newLeft = pos.left + delta;
     const maxLeft = screenWidth - 100;
 
-    const newLeftPos = () => {
-      if (newLeft > maxLeft) {
-        return maxLeft;
-      } else if (newLeft < 0) {
-        return 0;
-      }
-      return newLeft;
+    if (newLeft > maxLeft) {
+      return maxLeft;
+    } else if (newLeft < 0) {
+      return 0;
     }
+    return newLeft;
+  }
 
 
+
+  const moveDelta = function (dx, dy) {
+    const pos = this.el.getBoundingClientRect();
+    const screenHeight =
+      window.innerHeight || document.documentElement.clientHeight;
     const newTop = pos.top + dy;
     const maxTop = screenHeight - 100;
     const newTopPos = () => {
@@ -51,21 +67,6 @@ const piece = (function () {
       }
       return newTop;
     }
-    const getCurrLeftPos = () => this.el.getBoundingClientRect().left;
-
-    const createAnimationDx = setInterval(function () {
-      const direction = dx > 0 ? 'right' : 'left';
-      const final = newLeftPos();
-      const current = getCurrLeftPos();
-
-      if (direction === 'right' ? current >= final : final >= current) {
-        clearInterval(createAnimationDx);
-        return;
-      }
-      const step = direction === 'right' ? 3 : -3;
-      this.el.style.left = `${current + step}px`;
-    }.bind(this), 20);
-
 
 
     const getCurrTopPos = () => this.el.getBoundingClientRect().top;
@@ -79,11 +80,12 @@ const piece = (function () {
         return;
       }
       const step = direction === 'top' ? 3 : -3;
+
       this.el.style.top = `${current + step}px`;
     }.bind(this), 20)
 
-    // this.el.style.left = `${newLeftPos()}px`;
-    // this.el.style.top = `${newTopPos()}px`;
+    createAnimation(dx, this.el);
+
   };
 
   const setColor = function (color) {
@@ -155,12 +157,10 @@ function resetLocation() {
 
 
 function fetchTemp() {
-
   fetch("http://api.apixu.com/v1/current.json?key=dda6e762ae4f41efb7e173552192204&q=tel%20aviv")
     .then(validateResponse)
     .then(readResponseAsJSON)
     .then(data => {
-      console.log(data)
       return data.current.temp_c
     })
     .then(getColor)
