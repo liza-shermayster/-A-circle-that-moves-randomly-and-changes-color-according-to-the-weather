@@ -1,3 +1,6 @@
+import { Piece } from "./piece";
+import { getColor } from "./service";
+import 'regenerator-runtime/runtime'
 const config = [
   {
     btnId: 'btn-up',
@@ -21,82 +24,18 @@ const config = [
   }
 ];
 
-// piece object
-const piece = (function () {
-  let el = null;
-  let initTop;
-  let initLeft;
-
-  const setColor = function (color) {
-    this.el.classList.add(color);
-  }
-
-  const init = function (el) {
-    this.el = el;
-    const pos = this.el.getBoundingClientRect();
-    initLeft = pos.left;
-    initTop = pos.top;
-  };
-
-  const reset = function () {
-    this.el.style.left = initLeft + "px";
-    this.el.style.top = initTop + "px";
-  }
-
-  const moveRandom = function () {
-    this.el.style.left = Math.floor(Math.random() * 100) + "vw";
-    this.el.style.top = Math.floor(Math.random() * 100) + "vh";
-  }
-
-  const createAnimation = function (delta, el, side) {
-    const pos = el.getBoundingClientRect();
-    const directionIsPositive = delta > 0;
-    const final = getPieceLeftPosition(pos[side], delta);
-    const getCurrLeftPos = () => el.getBoundingClientRect()[side];
-    const interval = setInterval(() => {
-      const current = getCurrLeftPos();
-
-      if (isFinalPosition(current, final, directionIsPositive)) {
-        clearInterval(interval);
-        return;
-      }
-      const step = directionIsPositive ? 3 : -3;
-      el.style[side] = `${current + step}px`;
-    }, 20);
-  }
-  const isFinalPosition = function (current, final, direction) {
-    if (direction) {
-      return current >= final;
-    } else {
-      return final >= current;
-    }
-  }
-
-  const moveDelta = function (dx, dy) {
-
-    createAnimation(dx, this.el, 'left');
-    createAnimation(dy, this.el, 'top');
-
-  };
-
-  return {
-    init,
-    reset,
-    moveRandom,
-    moveDelta,
-    setColor
-  };
-})();
-
+let piece;
 
 window.addEventListener("DOMContentLoaded", init);
 
+
 function init() {
-  piece.init(document.getElementById("piece"));
+  piece = new Piece(document.getElementById("piece"));
   initRandomBtn();
   initResetBtn();
   initMoveBtns();
   fetchTemp();
+
 }
 
 
@@ -117,17 +56,10 @@ function initMoveBtns() {
   }
 }
 
-/**
- * @desc gives color to piece element according to Tel Aviv temperature
- */
-function fetchTemp() {
-  const telAvivTempUrl = "http://api.apixu.com/v1/current.json?key=dda6e762ae4f41efb7e173552192204&q=tel%20aviv";
-  fetch(telAvivTempUrl)
-    .then(validateResponse)
-    .then(readResponseAsJSON)
-    .then(getTempInC)
-    .then(getColor)
-    .then(piece.setColor.bind(piece));
+
+async function fetchTemp() {
+  const color = await getColor();
+  piece.setColor(color);
 }
 
 function initBtn(el) {
@@ -145,58 +77,33 @@ function handleClick(ev) {
   piece.moveDelta(parseInt(this.dataset.dx), parseInt(this.dataset.dy));
 }
 
-function validateResponse(response) {
-  if (!response.ok) {
-    throw Error(response.statusText);
-  }
-  return response;
-}
+// function validateResponse(response) {
+//   if (!response.ok) {
+//     throw Error(response.statusText);
+//   }
+//   return response;
+// }
 
-function readResponseAsJSON(response) {
-  return response.json();
-}
+// function readResponseAsJSON(response) {
+//   return response.json();
+// }
 
-function getTempInC(data) {
-  return data.current.temp_c;
-}
+// function getTempInC(data) {
+//   return data.current.temp_c;
+// }
 
-function getColor(tem) {
-  switch (tem) {
-    case tem <= 10:
-      return 'blue';
-    case 10 < tem <= 20:
-      return 'green';
-    case 20 < tem <= 30:
-      return 'yellow';
-    default:
-      return "red";
+// function getColor(tem) {
+//   switch (tem) {
+//     case tem <= 10:
+//       return 'blue';
+//     case 10 < tem <= 20:
+//       return 'green';
+//     case 20 < tem <= 30:
+//       return 'yellow';
+//     default:
+//       return "red";
 
-  }
-}
-
-function getPieceLeftPosition(posLeft, dx) {
-  const screenWidth = window.innerWidth || document.documentElement.clientWidth;
-  const newLeft = posLeft + dx;
-  const maxLeft = screenWidth - 100;
-
-  return getFinalPiecePosition(newLeft, maxLeft);
-}
-
-function getPieceTopPosition(posTop, dy) {
-  const screenHeight = window.innerHeight || document.documentElement.clientHeight;
-  const newTop = posTop + dy;
-  const maxTop = screenHeight - 100;
-
-  return getFinalPiecePosition(newTop, maxTop);
-}
-
-function getFinalPiecePosition(newPos, maxPos) {
-  if (newPos > maxPos) {
-    return maxPos;
-  } else if (newPos < 0) {
-    return 0;
-  }
-  return newPos;
-}
+//   }
+// }
 
 
