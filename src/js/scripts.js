@@ -48,39 +48,35 @@ const piece = (function () {
     this.el.style.top = Math.floor(Math.random() * 100) + "vh";
   }
 
-
-  const moveDelta = function (dx, dy) {
-    const pos = this.el.getBoundingClientRect();
-    //move on x axis 
-    const getCurrLeftPos = () => this.el.getBoundingClientRect().left;
-    const createAnimationDx = setInterval(() => {
-      const direction = dx > 0 ? 'right' : 'left';
-      const final = getPieceLeftPosition(pos.left, dx);
+  const createAnimation = function (delta, el, side) {
+    const pos = el.getBoundingClientRect();
+    const directionIsPositive = delta > 0;
+    const final = getPieceLeftPosition(pos[side], delta);
+    const getCurrLeftPos = () => el.getBoundingClientRect()[side];
+    const interval = setInterval(() => {
       const current = getCurrLeftPos();
 
-      if (direction === 'right' ? current >= final : final >= current) {
-        clearInterval(createAnimationDx);
+      if (isFinalPosition(current, final, directionIsPositive)) {
+        clearInterval(interval);
         return;
       }
-      const step = direction === 'right' ? 3 : -3;
-      this.el.style.left = `${current + step}px`;
+      const step = directionIsPositive ? 3 : -3;
+      el.style[side] = `${current + step}px`;
     }, 20);
+  }
+  const isFinalPosition = function (current, final, direction) {
+    if (direction) {
+      return current >= final;
+    } else {
+      return final >= current;
+    }
+  }
 
-    //move on y axis
-    const getCurrTopPos = () => this.el.getBoundingClientRect().top;
-    const createAnimationDy = setInterval(() => {
-      const direction = dy > 0 ? 'top' : 'down';
-      const final = getPieceRightPosition(pos.top, dy);
-      const current = getCurrTopPos();
+  const moveDelta = function (dx, dy) {
 
-      if (direction === 'top' ? current >= final : final >= current) {
-        clearInterval(createAnimationDy);
-        return;
-      }
-      const step = direction === 'top' ? 3 : -3;
+    createAnimation(dx, this.el, 'left');
+    createAnimation(dy, this.el, 'top');
 
-      this.el.style.top = `${current + step}px`;
-    }, 20)
   };
 
   return {
@@ -183,25 +179,24 @@ function getPieceLeftPosition(posLeft, dx) {
   const newLeft = posLeft + dx;
   const maxLeft = screenWidth - 100;
 
-  if (newLeft > maxLeft) {
-    return maxLeft;
-  } else if (newLeft < 0) {
-    return 0;
-  }
-  return newLeft;
+  return getFinalPiecePosition(newLeft, maxLeft);
 }
 
-function getPieceRightPosition(posRight, dy) {
+function getPieceTopPosition(posTop, dy) {
   const screenHeight = window.innerHeight || document.documentElement.clientHeight;
-  const newTop = posRight + dy;
+  const newTop = posTop + dy;
   const maxTop = screenHeight - 100;
 
-  if (newTop > maxTop) {
-    return maxTop;
-  } else if (newTop < 0) {
+  return getFinalPiecePosition(newTop, maxTop);
+}
+
+function getFinalPiecePosition(newPos, maxPos) {
+  if (newPos > maxPos) {
+    return maxPos;
+  } else if (newPos < 0) {
     return 0;
   }
-  return newTop;
+  return newPos;
 }
 
 
